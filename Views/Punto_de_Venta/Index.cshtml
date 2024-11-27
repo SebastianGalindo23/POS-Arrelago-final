@@ -1,0 +1,179 @@
+﻿<style>
+    .container {
+        margin-top: 20px;
+    }
+
+    h1 {
+        margin-bottom: 40px;
+    }
+
+    .input-group {
+        margin-bottom: 20px;
+    }
+
+    .filters {
+        display: flex;
+        align-items: center;
+    }
+
+        .filters label {
+            margin-right: 10px;
+            margin-left: 5px;
+        }
+</style>
+
+<div class="container my-4">
+    <h1 class="text-center">Bienvenido a Ventas</h1>
+
+    <div class="row">
+        <div class="col-12 mb-3">
+            <form method="get" action="@Url.Action("Index", "Punto_de_Venta")">
+                <div class="input-group">
+                    <!-- Barra de búsqueda -->
+                    <input type="text" class="form-control" name="search" placeholder="Buscar..." id="searchInput" />
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+                <!-- Filtro de búsqueda -->
+                <div class="input-group-append">
+                    Filtros:
+                    <div class="btn-group">
+                        <input type="radio" name="filter" id="filterNombre" value="nombre" checked>
+                        <label for="filterNombre"> Nombre</label>
+                        <input type="radio" name="filter" id="filterCodigo" value="codigo">
+                        <label for="filterCodigo"> Código</label>
+                        <input type="radio" name="filter" id="filterPrecio" value="precio">
+                        <label for="filterPrecio"> Precio</label>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Grilla de productos -->
+        <div class="col-8">
+            <h4>Productos</h4>
+            <div class="row" id="grillaProductos">
+                <!-- Producto -->
+                @foreach (var producto in Model)
+                {
+                    <div class="col-6 col-md-4 mb-3">
+                        <div class="card" style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                            <img src="@producto.UrlImagen" class="card-img-top" style="height: 80px; object-fit: contain;" alt="@producto.Nombre">
+                            <div class="card-body p-2">
+                                <h6 class="card-title text-truncate" title="@producto.Nombre">@producto.Nombre</h6>
+                                <p class="card-text mb-1" style="font-size: 0.9em;">Q.@producto.Precio</p>
+                                <p class="card-text mb-1" style="font-size: 0.8em; color: gray;">Stock: @producto.Stock</p>
+                                <button class="btn btn-success btn-sm w-100 add-to-cart"
+                                        data-id="@producto.Id"
+                                        data-nombre="@producto.Nombre"
+                                        data-precio="@producto.Precio"
+                                        data-stock="@producto.Stock">
+                                    <i class="bi bi-cart-plus"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Carrito -->
+        <div class="col-4">
+            <h4>Tus Productos</h4>
+            <div class="list-group" id="cart">
+            </div>
+            <div class="mt-3">
+                <h5>Total: <span id="total">Q.0.00</span></h5>
+                <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#finalizarCompra">
+                    <i class="bi bi-cash"></i> Finalizar Compra
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let carrito = []; 
+    const contenedorCarrito = document.getElementById('cart'); 
+    const elementoTotal = document.getElementById('total'); 
+
+    // Función para actualizar el carrito
+    function actualizarCarrito(){
+        contenedorCarrito.innerHTML = ''; 
+        let total = 0; 
+
+        carrito.forEach((item) => {
+            const nuevoElemento = document.createElement('div');
+            nuevoElemento.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
+            nuevoElemento.innerHTML = `
+                ${item.nombre}
+                <span class="badge rounded-pill">
+                    ${item.cantidad} x Q.${item.precio.toFixed(2)} = Q.${(item.cantidad * item.precio).toFixed(2)}
+                </span>
+                <div>
+                    <button class="btn btn-sm btn-secondary decrement-item" data-id="${item.id}">
+                        <i class="bi bi-dash-circle"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger remove-item" data-id="${item.id}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            contenedorCarrito.appendChild(nuevoElemento);
+            total += item.cantidad * item.precio; // Sumar al total
+        });
+
+        elementoTotal.textContent = `Q.${total.toFixed(2)}`; // Actualizar el total en el HTML
+    }
+
+    
+    document.getElementById('grillaProductos').addEventListener('click', function (e) {
+        if (e.target.closest('.add-to-cart')) {
+            const button = e.target.closest('.add-to-cart');
+            const id = button.getAttribute('data-id');
+            const nombre = button.getAttribute('data-nombre');
+            const precio = parseFloat(button.getAttribute('data-precio'));
+            const stock = parseInt(button.getAttribute('data-stock'));
+
+            const productoEnCarrito = carrito.find(item => item.id === id);
+
+            if (productoEnCarrito) {
+                if (productoEnCarrito.cantidad < stock) {
+                    productoEnCarrito.cantidad++; 
+                } 
+                else {
+
+                    return; 
+                }
+                
+            } else {
+                carrito.push({ id, nombre, precio, cantidad: 1 }); 
+            }
+
+            actualizarCarrito(); 
+        }
+    });
+
+    // Evento para gestionar el carrito (eliminar o reducir cantidad de productos)
+    contenedorCarrito.addEventListener('click', function (e) {
+        const target = e.target.closest('.btn');
+        if (!target) return;
+
+        const id = target.getAttribute('data-id');
+        const item = carrito.find(item => item.id == id);
+
+        if (target.classList.contains('remove-item')) {
+            carrito = carrito.filter(item => item.id != id); 
+        } else if (target.classList.contains('decrement-item') && item) {
+            item.cantidad--; 
+            if (item.cantidad === 0) {
+                carrito = carrito.filter(item => item.id != id); 
+            }
+        }
+
+        actualizarCarrito(); 
+    });
+</script>

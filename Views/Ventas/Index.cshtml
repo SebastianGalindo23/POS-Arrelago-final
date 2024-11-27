@@ -1,0 +1,92 @@
+﻿@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Ventas";
+}
+
+<div class="container my-4">
+    <h1 class="text-center">Bienvenido a Ventas</h1>
+
+    <div class="row">
+        <div class="col-12 mb-3">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Buscar producto..." id="searchInput" />
+                <button class="btn btn-primary" id="searchButton">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Grilla de productos -->
+        <div class="col-8">
+            <h4>Productos</h4>
+            <div class="row" id="grillaProductos">
+                <!-- Producto -->
+                @foreach (var producto in Model)
+                {
+                    <div class="col-4 mb-3">
+                        <div class="card">
+                            <img src="@producto.UrlImagen" class="card-img-top" style="max-height:200px" alt="@producto.Nombre">
+                            <div class="card-body">
+                                <h5 class="card-title">@producto.Nombre</h5>
+                                <p class="card-text">@producto.Descripcion</p>
+                                <p class="card-text">Q.@producto.Precio</p>
+                                <p class="card-text">Stock: @producto.Stock</p>
+                                <button class="btn btn-success w-100 add-to-cart"
+                                        data-id="@producto.Id"
+                                        data-nombre="@producto.Nombre"
+                                        data-precio="@producto.Precio"
+                                        data-stock="@producto.Stock">
+                                    <i class="bi bi-cart-plus"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Carrito -->
+        <div class="col-4">
+            <h4>Carrito</h4>
+            <div class="list-group" id="cart">
+            </div>
+            <div class="mt-3">
+                <h5>Total: <span id="total"></span> </h5>
+                <button class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#finalizarCompra">
+                    <i class="bi bi-cash"></i> Finalizar Compra
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="finalizarCompra" tabindex="-1" aria-labelledby="finalizarCompraLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="finalizarCompraLabel">Finalizar Compra</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formularioFinalizarCompra">
+                    <div class="mb-3">
+                        <label for="cliente" class="form-label">Seleccione al Cliente</label>
+                        <select class="form-select" id="cliente" name="cliente" required>
+                            <option value="">Seleccione ...</option>
+                            @foreach (var cliente in ViewBag.Clientes as List<POS.Models.Cliente>)
+                            {
+                                <option value="@cliente.Id">@cliente.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="botonFinalizarCompra">Finalizar</button>
+            </div>
+        </div>
+    </div>
+</div>
